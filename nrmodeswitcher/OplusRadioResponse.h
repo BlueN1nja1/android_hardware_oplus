@@ -5,13 +5,26 @@
 
 #pragma once
 
+#include <condition_variable>
+#include <memory>
+#include <mutex>
+
 #include <aidl/vendor/oplus/hardware/radio/BnOplusRadioResponse.h>
 
 namespace aidl::vendor::oplus::hardware::radio {
 
+struct NrModeState {
+     std::mutex mutex;
+     std::condition_variable cv;
+     int32_t expected_serial = -1;
+     bool done = false;
+     int32_t error = -1;
+     int32_t result = -1;
+};
+
 class OplusRadioResponse : public BnOplusRadioResponse {
   public:
-    explicit OplusRadioResponse(int32_t& result);
+    explicit OplusRadioResponse(std::shared_ptr<NrModeState> state);
     ndk::ScopedAStatus setCallbackExtResponse() override;
     ndk::ScopedAStatus setNrModeResponse(const OplusRadioResponseInfo& info,
                                          int32_t result) override;
@@ -82,7 +95,6 @@ class OplusRadioResponse : public BnOplusRadioResponse {
             const OplusRadioResponseInfo& info, const std::vector<int32_t>& retryCount) override;
 
   private:
-    int32_t& result_;
+    std::shared_ptr<NrModeState> state_;
 };
-
 };  // namespace aidl::vendor::oplus::hardware::radio

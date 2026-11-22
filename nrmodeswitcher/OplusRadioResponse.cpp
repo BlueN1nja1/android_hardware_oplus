@@ -4,19 +4,27 @@
  */
 
 #include "OplusRadioResponse.h"
+#include <utility>
 
 namespace aidl::vendor::oplus::hardware::radio {
 
-OplusRadioResponse::OplusRadioResponse(int32_t& result) : result_(result) {}
+OplusRadioResponse::OplusRadioResponse(std::shared_ptr<NrModeState> state)
+    : state_(std::move(state)) {}
 
 ndk::ScopedAStatus OplusRadioResponse::setCallbackExtResponse() {
-    return ndk::ScopedAStatus::ok();
-}
+        return ndk::ScopedAStatus::ok();
+    }
 
 ndk::ScopedAStatus OplusRadioResponse::setNrModeResponse(const OplusRadioResponseInfo& info,
-                                                         int32_t result) {
-    result_ = result;
-    return ndk::ScopedAStatus::ok();
+                                                             int32_t result) {
+        std::lock_guard<std::mutex> lock(state_->mutex);
+        if (info.serial == state_->expected_serial) {
+            state_->error = info.error;
+            state_->result = result;
+            state_->done = true;
+            state_->cv.notify_one();
+        }
+        return ndk::ScopedAStatus::ok();
 }
 
 ndk::ScopedAStatus OplusRadioResponse::getNrModeResponse(const OplusRadioResponseInfo& info,
