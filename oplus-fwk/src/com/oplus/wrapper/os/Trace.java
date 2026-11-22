@@ -1,11 +1,8 @@
-/*
- * SPDX-FileCopyrightText: The LineageOS Project
- * SPDX-License-Identifier: Apache-2.0
- */
-
 package com.oplus.wrapper.os;
 
 public class Trace {
+    public static final long TRACE_TAG_VIEW = android.os.Trace.TRACE_TAG_VIEW;
+
     public static void asyncTraceBegin(long traceTag, String methodName, int cookie) {
         android.os.Trace.asyncTraceBegin(traceTag, methodName, cookie);
     }
